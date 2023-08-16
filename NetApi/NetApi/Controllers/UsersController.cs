@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NetApi.Entities;
+using NetApi.Services;
 
 namespace NetApi.Controllers
 {
@@ -14,21 +15,33 @@ namespace NetApi.Controllers
     public class UsersController : ControllerBase
     {
         private readonly NetapiContext _context;
+        private readonly IUserService  _userService;
 
-        public UsersController(NetapiContext context)
+        public UsersController(NetapiContext context, IUserService userService)
         {
             _context = context;
+            _userService = userService;
         }
 
         // GET: api/Users
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
-          if (_context.Users == null)
+            var users = await this._userService.GetUsers();
+            if (users == null)
+            {
+                return NotFound();
+            }
+            else
+
+            return users;
+
+
+          /* if (_context.Users == null)
           {
               return NotFound();
           }
-            return await _context.Users.ToListAsync();
+            return await _context.Users.ToListAsync(); */
         }
 
         // GET: api/Users/5
