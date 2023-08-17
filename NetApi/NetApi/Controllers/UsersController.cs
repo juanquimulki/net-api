@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using NetApi.Entities;
 using NetApi.Services;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace NetApi.Controllers
 {
@@ -16,15 +16,18 @@ namespace NetApi.Controllers
     {
         private readonly NetapiContext _context;
         private readonly IUserService  _userService;
+        IConfiguration _configuration;
 
-        public UsersController(NetapiContext context, IUserService userService)
+        public UsersController(NetapiContext context, IUserService userService, IConfiguration configuration)
         {
             _context = context;
             _userService = userService;
+            _configuration = configuration;
         }
 
         // GET: api/Users
         [HttpGet]
+        [Authorize(AuthenticationSchemes = "Bearer")]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
             var users = await this._userService.GetUsers();
@@ -137,6 +140,40 @@ namespace NetApi.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        [HttpOptions]
+        public ActionResult ShowToken()
+        {
+            var issuer = _configuration["Jwt:Issuer"];
+            var audience = _configuration["Jwt:Audience"];
+            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]);
+            var signingCredentials = new SigningCredentials(
+                                    new SymmetricSecurityKey(key),
+                                    SecurityAlgorithms.HmacSha512Signature
+                                );
+
+            var subject = new ClaimsIdentity(new[]
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, "juanquimulki@gmail.com"),
+                new Claim(JwtRegisteredClaimNames.Email, "jmulki"),
+            });
+
+            var expires = DateTime.UtcNow.AddMinutes(10);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = subject,
+                Expires = expires,
+                Issuer = issuer,
+                Audience = audience,
+                SigningCredentials = signingCredentials
+            };
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var jwtToken = tokenHandler.WriteToken(token);
+
+            return Ok(jwtToken);
         }
 
         private bool UserExists(int id)
