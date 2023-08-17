@@ -5,6 +5,6 @@ namespace NetApi.Services
 {
     public interface IUserService
     {
-        public Task<ActionResult<IEnumerable<User>>?> GetUsers();
+        public Task<IEnumerable<User>?> GetUsers();
     }
 }

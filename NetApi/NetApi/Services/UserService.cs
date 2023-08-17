@@ -9,7 +9,7 @@ namespace NetApi.Services
         private readonly NetapiContext _context;
         public UserService(NetapiContext context) {  _context = context; }
 
-        public async Task<ActionResult<IEnumerable<User>>?> GetUsers()
+        public async Task<IEnumerable<User>?> GetUsers()
         {
             if (_context.Users == null)
             {

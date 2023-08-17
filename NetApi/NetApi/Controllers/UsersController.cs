@@ -32,9 +32,8 @@ namespace NetApi.Controllers
             {
                 return NotFound();
             }
-            else
 
-            return users;
+            return Ok(users);
 
 
           /* if (_context.Users == null)
@@ -52,14 +51,26 @@ namespace NetApi.Controllers
           {
               return NotFound();
           }
-            var user = await _context.Users.FindAsync(id);
+
+            var users = await this._userService.GetUsers();
+            if (users == null)
+            {
+                return NotFound();
+            }
+
+            IEnumerable<User> usersArray = users.Cast<User>();
+            var user = from u in users where u.Id == id select u;
+
+            return Ok(user);
+
+            /*var user = await _context.Users.FindAsync(id);
 
             if (user == null)
             {
                 return NotFound();
             }
 
-            return user;
+            return user;*/
         }
 
         // PUT: api/Users/5
